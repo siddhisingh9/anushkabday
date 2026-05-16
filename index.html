@@ -2,22 +2,31 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Happy 20th Birthday, Anushka! 🎂</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body {
+html, body {
   background: #0d0d1a;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
   font-family: 'Press Start 2P', monospace;
   image-rendering: pixelated;
+  touch-action: none;
+  overflow: hidden;
+}
+
+#scale-wrapper {
+  transform-origin: top center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 #game-container {
@@ -28,11 +37,10 @@ body {
   box-shadow: 0 0 0 4px #c8922a, 0 0 40px #f7c94866, 0 0 80px #f7c94833;
 }
 
-canvas {
-  display: block;
-  width: 480px;
-  height: 320px;
-}
+canvas { display: block; width: 480px; }
+#game-canvas        { height: 320px; }
+#title-canvas       { height: 480px; }
+#celebration-canvas { height: 360px; }
 
 #textbox {
   background: #f0e8c8;
@@ -41,1001 +49,716 @@ canvas {
   min-height: 80px;
   position: relative;
   display: none;
+  cursor: pointer;
 }
-#textbox-inner {
-  color: #1a0a00;
-  font-size: 8px;
-  line-height: 18px;
-  min-height: 36px;
-}
+#textbox-inner { color: #1a0a00; font-size: 8px; line-height: 18px; min-height: 36px; }
 #textbox-arrow {
-  position: absolute;
-  bottom: 10px;
-  right: 14px;
-  color: #5a3e1b;
-  font-size: 8px;
-  animation: blink 0.7s infinite;
+  position: absolute; bottom: 10px; right: 14px;
+  color: #5a3e1b; font-size: 8px;
+  animation: blink 0.7s infinite; display: none;
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 #ui-bar {
-  background: #1a0a00;
-  border-top: 4px solid #5a3e1b;
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 7px;
-  color: #f0e8c8;
+  background: #1a0a00; border-top: 4px solid #5a3e1b;
+  padding: 8px 16px; display: flex; align-items: center;
+  justify-content: space-between; font-size: 7px; color: #f0e8c8;
 }
 #step-hint { color: #f7c948; font-size: 6px; animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-/* CELEBRATION SCREEN */
-#celebration {
+/* ══ TOUCH D-PAD ══ */
+#touch-controls {
   display: none;
-  flex-direction: column;
-  align-items: center;
   width: 480px;
-  background: #0d0d1a;
-}
-
-#celebration-canvas {
-  display: block;
-  width: 480px;
-  height: 360px;
-}
-
-#cake-ui {
-  background: #1a0a00;
-  border-top: 4px solid #f7c948;
-  width: 100%;
-  padding: 10px 16px;
-  display: flex;
+  background: #100820;
+  padding: 14px 20px 16px;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
+  border-top: 2px solid #2a1a40;
 }
 
-.cake-btn {
+#dpad {
+  position: relative;
+  width: 120px; height: 120px;
+  flex-shrink: 0;
+}
+.dpad-btn {
+  position: absolute;
+  width: 40px; height: 40px;
+  background: #1e1040;
+  border: 2px solid #5a3e90;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: #c3a0f7;
+  border-radius: 8px;
+  user-select: none; cursor: pointer;
+}
+.dpad-btn.pressed { background: #3a2070; border-color: #c3a0f7; color: #fff; }
+#dbtn-up    { top:0;    left:40px; }
+#dbtn-down  { top:80px; left:40px; }
+#dbtn-left  { top:40px; left:0;    }
+#dbtn-right { top:40px; left:80px; }
+#dpad-center { position:absolute; top:40px; left:40px; width:40px; height:40px; background:#100820; border-radius:4px; }
+
+#action-btns { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+.action-btn {
   font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
-  padding: 8px 10px;
-  border: 3px solid #f7c948;
-  background: #2a1a00;
-  color: #f7c948;
-  cursor: pointer;
-  image-rendering: pixelated;
-  transition: background 0.1s;
+  font-size: 7px; padding: 12px 16px;
+  border: 2px solid #f7c948;
+  background: #2a1a00; color: #f7c948;
+  border-radius: 8px; cursor: pointer;
+  user-select: none; min-width: 100px; text-align: center;
 }
-.cake-btn:hover { background: #4a2e00; }
-.cake-btn:active { background: #f7c948; color: #1a0a00; }
+.action-btn.pressed { background: #f7c948; color: #1a0a00; }
 
+/* ══ CELEBRATION ══ */
+#celebration {
+  display: none; flex-direction: column;
+  align-items: center; width: 480px; background: #0d0d1a;
+}
+#cake-ui {
+  background: #1a0a00; border-top: 4px solid #f7c948;
+  width: 100%; padding: 10px 16px;
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.cake-btn {
+  font-family: 'Press Start 2P', monospace; font-size: 7px;
+  padding: 10px 12px; border: 3px solid #f7c948;
+  background: #2a1a00; color: #f7c948;
+  cursor: pointer; border-radius: 4px;
+}
+.cake-btn:active { background: #f7c948; color: #1a0a00; }
 #music-status { color: #f0e8c8; font-size: 6px; }
 
-/* TITLE SCREEN */
+/* ══ TITLE ══ */
 #title-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: #0d0d1a;
-  cursor: pointer;
-}
-#title-canvas {
-  display: block;
-  width: 480px;
-  height: 480px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: #0d0d1a; cursor: pointer;
 }
 </style>
 </head>
 <body>
+<div id="scale-wrapper">
+  <div id="game-container">
 
-<div id="game-container">
-  <!-- TITLE -->
-  <div id="title-screen">
-    <canvas id="title-canvas" width="480" height="480"></canvas>
-  </div>
+    <!-- TITLE -->
+    <div id="title-screen">
+      <canvas id="title-canvas" width="480" height="480"></canvas>
+    </div>
 
-  <!-- ADVENTURE GAME -->
-  <canvas id="game-canvas" width="480" height="320" style="display:none"></canvas>
-  <div id="textbox">
-    <div id="textbox-inner"></div>
-    <div id="textbox-arrow">▼</div>
-  </div>
-  <div id="ui-bar" style="display:none">
-    <span id="location-label">✦ THE SUNKEN VALE</span>
-    <span id="step-hint">▲▼◀▶ MOVE &nbsp;|&nbsp; SPACE: TALK</span>
-  </div>
+    <!-- ADVENTURE GAME -->
+    <canvas id="game-canvas" width="480" height="320" style="display:none"></canvas>
+    <div id="textbox">
+      <div id="textbox-inner"></div>
+      <div id="textbox-arrow">▼</div>
+    </div>
+    <div id="ui-bar" style="display:none">
+      <span id="location-label">✦ THE SUNKEN VALE</span>
+      <span id="step-hint">D-PAD: MOVE  |  ✦: TALK</span>
+    </div>
 
-  <!-- CELEBRATION -->
-  <div id="celebration">
-    <canvas id="celebration-canvas" width="480" height="360"></canvas>
-    <div id="cake-ui">
-      <button class="cake-btn" id="btn-music">♪ PLAY MUSIC</button>
-      <button class="cake-btn" id="btn-candle">🕯 LIGHT CANDLES</button>
-      <button class="cake-btn" id="btn-balloons">🎈 BALLOONS!</button>
-      <span id="music-status">make a wish... ✨</span>
+    <!-- CELEBRATION -->
+    <div id="celebration">
+      <canvas id="celebration-canvas" width="480" height="360"></canvas>
+      <div id="cake-ui">
+        <button class="cake-btn" id="btn-music">♪ PLAY MUSIC</button>
+        <button class="cake-btn" id="btn-candle">🕯 LIGHT CANDLES</button>
+        <button class="cake-btn" id="btn-balloons">🎈 BALLOONS!</button>
+        <span id="music-status">make a wish... ✨</span>
+      </div>
+    </div>
+
+  </div><!-- /game-container -->
+
+  <!-- TOUCH CONTROLS rendered outside game-container so they don't stretch the canvas -->
+  <div id="touch-controls">
+    <div id="dpad">
+      <div class="dpad-btn" id="dbtn-up">▲</div>
+      <div class="dpad-btn" id="dbtn-left">◀</div>
+      <div id="dpad-center"></div>
+      <div class="dpad-btn" id="dbtn-right">▶</div>
+      <div class="dpad-btn" id="dbtn-down">▼</div>
+    </div>
+    <div id="action-btns">
+      <button class="action-btn" id="abtn-talk">✦ TALK</button>
+      <button class="action-btn" id="abtn-next">▼ NEXT</button>
     </div>
   </div>
-</div>
+
+</div><!-- /scale-wrapper -->
 
 <script>
 const $ = id => document.getElementById(id);
-const rand = (a,b) => Math.random()*(b-a)+a;
+const rand  = (a,b) => Math.random()*(b-a)+a;
 const randi = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+
+// ══════════════════════════════════════════════
+//  RESPONSIVE SCALING
+// ══════════════════════════════════════════════
+function applyScale() {
+  const wrapper = $('scale-wrapper');
+  const vw = window.innerWidth;
+  const scale = Math.min(1, (vw - 8) / 480);
+  wrapper.style.transform = `scale(${scale})`;
+  wrapper.style.marginTop = '0';
+  // shrink body so the scaled element doesn't create scroll
+  document.body.style.height = Math.ceil(wrapper.scrollHeight * scale) + 'px';
+}
+window.addEventListener('resize', applyScale);
+applyScale();
+
+// ══════════════════════════════════════════════
+//  TOUCH D-PAD
+// ══════════════════════════════════════════════
+const touchKeys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false };
+
+function bindDpad(id, key) {
+  const el = $(id);
+  function press(e)   { e.preventDefault(); touchKeys[key]=true;  el.classList.add('pressed'); }
+  function release(e) { e.preventDefault(); touchKeys[key]=false; el.classList.remove('pressed'); }
+  el.addEventListener('touchstart',  press,   {passive:false});
+  el.addEventListener('touchend',    release, {passive:false});
+  el.addEventListener('touchcancel', release, {passive:false});
+  el.addEventListener('mousedown',   press);
+  el.addEventListener('mouseup',     release);
+  el.addEventListener('mouseleave',  release);
+}
+bindDpad('dbtn-up',    'ArrowUp');
+bindDpad('dbtn-down',  'ArrowDown');
+bindDpad('dbtn-left',  'ArrowLeft');
+bindDpad('dbtn-right', 'ArrowRight');
+
+function bindActionBtn(id, fn) {
+  const el = $(id);
+  function go(e) { e.preventDefault(); el.classList.add('pressed'); fn(); setTimeout(()=>el.classList.remove('pressed'),120); }
+  el.addEventListener('touchstart', go, {passive:false});
+  el.addEventListener('mousedown',  go);
+}
+bindActionBtn('abtn-talk', () => { if(gState.talking||gState.msgQueue) advanceDialog(); else tryInteract(); });
+bindActionBtn('abtn-next', () => { if(gState.talking||gState.msgQueue) advanceDialog(); });
+
+// tap textbox to advance dialog on mobile
+$('textbox').addEventListener('touchstart', e=>{ e.preventDefault(); if(gState.talking||gState.msgQueue) advanceDialog(); }, {passive:false});
+$('textbox').addEventListener('click', ()=>{ if(gState.talking||gState.msgQueue) advanceDialog(); });
+
+function showTouchControls(show) {
+  $('touch-controls').style.display = show ? 'flex' : 'none';
+  setTimeout(applyScale, 0);
+}
+
+const isTouchDevice = () => navigator.maxTouchPoints > 0 || window.matchMedia('(pointer:coarse)').matches;
 
 // ══════════════════════════════════════════════
 //  TITLE SCREEN
 // ══════════════════════════════════════════════
-(function titleScreen() {
+(function() {
   const canvas = $('title-canvas');
   const ctx = canvas.getContext('2d');
-  let stars = Array.from({length:80}, () => ({
-    x: randi(0,479), y: randi(0,479),
-    s: Math.random()*1.5+0.5,
-    t: Math.random()*Math.PI*2,
-    sp: Math.random()*0.05+0.01
+  const stars = Array.from({length:80}, () => ({
+    x:randi(0,479), y:randi(0,479),
+    s:Math.random()*1.5+0.5, t:Math.random()*Math.PI*2, sp:Math.random()*0.05+0.01
   }));
-
-  const hMap = {'.':null,'h':'#8B6914','s':'#f7c99e','e':'#1a0a00','m':'#c0392b','b':'#4a90d9','l':'#2c3e6e','i':'#ffffff'};
-  const heroSprite = [
+  const hMap = {'.':null,'h':'#8B6914','s':'#f7c99e','e':'#1a0a00','m':'#c0392b','b':'#4a90d9','l':'#2c3e6e'};
+  const heroRows = [
     '....hhhh....','...hssssh...','..hsssssssh.','..hseesseh..',
     '..hsssssssh.','..hssmmsssh.','...hmmmmmh..','....hsssh...',
     '..bbbhshbbb.','..bbbhshbbb.','...bbhshbb..','....bbbbb...',
     '....ll.ll...','....ll.ll...','....ss.ss...','....ss.ss...',
   ];
-
-  function drawPixelSprite(ctx, sprite, colorMap, x, y, scale) {
-    sprite.forEach((row, ry) => {
-      [...row].forEach((ch, rx) => {
-        const col = colorMap[ch];
-        if(col){ ctx.fillStyle=col; ctx.fillRect(x+rx*scale, y+ry*scale, scale, scale); }
-      });
-    });
+  function drawSprite(ctx,rows,cmap,x,y,sc) {
+    rows.forEach((row,ry)=>[...row].forEach((ch,rx)=>{
+      const col=cmap[ch];if(col){ctx.fillStyle=col;ctx.fillRect(x+rx*sc,y+ry*sc,sc,sc);}
+    }));
   }
-
-  let frame = 0;
-  let titleAnimId = null;
-  function drawTitle() {
+  let frame=0, animId=null;
+  function draw() {
     ctx.clearRect(0,0,480,480);
-    const grad = ctx.createLinearGradient(0,0,0,480);
-    grad.addColorStop(0,'#060618'); grad.addColorStop(1,'#1a1040');
-    ctx.fillStyle = grad; ctx.fillRect(0,0,480,480);
-
-    stars.forEach(s => {
-      s.t += s.sp;
-      const alpha = (Math.sin(s.t)+1)/2;
-      ctx.fillStyle = `rgba(255,255,220,${alpha})`;
-      ctx.fillRect(Math.floor(s.x), Math.floor(s.y), Math.ceil(s.s), Math.ceil(s.s));
+    const g=ctx.createLinearGradient(0,0,0,480);
+    g.addColorStop(0,'#060618');g.addColorStop(1,'#1a1040');
+    ctx.fillStyle=g;ctx.fillRect(0,0,480,480);
+    stars.forEach(s=>{
+      s.t+=s.sp;
+      ctx.fillStyle=`rgba(255,255,220,${(Math.sin(s.t)+1)/2})`;
+      ctx.fillRect(s.x|0,s.y|0,Math.ceil(s.s),Math.ceil(s.s));
     });
-
-    ctx.fillStyle = '#f7e880';
-    ctx.beginPath(); ctx.arc(380,70,30,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#1a1040';
-    ctx.beginPath(); ctx.arc(390,65,26,0,Math.PI*2); ctx.fill();
-
-    ctx.fillStyle = '#0a0a1a';
-    ctx.beginPath(); ctx.moveTo(0,320);
-    ctx.quadraticCurveTo(80,220,200,260);
-    ctx.quadraticCurveTo(300,200,400,240);
-    ctx.quadraticCurveTo(450,220,480,250);
-    ctx.lineTo(480,480); ctx.lineTo(0,480); ctx.fill();
-
-    [[40,240],[90,250],[350,220],[410,230],[460,235]].forEach(([tx,ty]) => {
-      ctx.fillStyle = '#0d1f0d'; ctx.fillRect(tx-3,ty,6,20);
-      ctx.fillStyle = '#122912';
-      ctx.fillRect(tx-10,ty-20,20,20); ctx.fillRect(tx-8,ty-36,16,18); ctx.fillRect(tx-5,ty-48,10,14);
+    ctx.fillStyle='#f7e880';ctx.beginPath();ctx.arc(380,70,30,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#1a1040';ctx.beginPath();ctx.arc(390,65,26,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0a0a1a';ctx.beginPath();ctx.moveTo(0,320);
+    ctx.quadraticCurveTo(80,220,200,260);ctx.quadraticCurveTo(300,200,400,240);
+    ctx.quadraticCurveTo(450,220,480,250);ctx.lineTo(480,480);ctx.lineTo(0,480);ctx.fill();
+    [[40,240],[90,250],[350,220],[410,230],[460,235]].forEach(([tx,ty])=>{
+      ctx.fillStyle='#0d1f0d';ctx.fillRect(tx-3,ty,6,20);
+      ctx.fillStyle='#122912';ctx.fillRect(tx-10,ty-20,20,20);ctx.fillRect(tx-8,ty-36,16,18);ctx.fillRect(tx-5,ty-48,10,14);
     });
-
-    ctx.fillStyle = '#1a0a00ee'; ctx.fillRect(40,90,400,130);
-    ctx.strokeStyle = '#f7c948'; ctx.lineWidth = 4; ctx.strokeRect(40,90,400,130);
-    ctx.strokeStyle = '#c8922a'; ctx.lineWidth = 2; ctx.strokeRect(48,98,384,114);
-
-    ctx.fillStyle = '#f7c948'; ctx.font = '18px "Press Start 2P"'; ctx.textAlign = 'center';
-    ctx.fillText("ANUSHKA'S", 240, 130);
-    ctx.fillStyle = '#ff9f43'; ctx.fillText('BIG ADVENTURE', 240, 158);
-    ctx.fillStyle = '#f0e8c8'; ctx.font = '9px "Press Start 2P"';
-    ctx.fillText('A BIRTHDAY QUEST', 240, 200);
-
-    const bobY = Math.sin(frame*0.05)*5;
-    drawPixelSprite(ctx, heroSprite, hMap, 208, 280+bobY, 4);
-
-    if(Math.floor(frame/30)%2===0) {
-      ctx.fillStyle = '#f0e8c8'; ctx.font = '8px "Press Start 2P"'; ctx.textAlign = 'center';
-      ctx.fillText('PRESS  ANYWHERE  TO  START', 240, 420);
+    ctx.fillStyle='#1a0a00ee';ctx.fillRect(40,90,400,130);
+    ctx.strokeStyle='#f7c948';ctx.lineWidth=4;ctx.strokeRect(40,90,400,130);
+    ctx.strokeStyle='#c8922a';ctx.lineWidth=2;ctx.strokeRect(48,98,384,114);
+    ctx.fillStyle='#f7c948';ctx.font='18px "Press Start 2P"';ctx.textAlign='center';
+    ctx.fillText("ANUSHKA'S",240,130);
+    ctx.fillStyle='#ff9f43';ctx.fillText('BIG ADVENTURE',240,158);
+    ctx.fillStyle='#f0e8c8';ctx.font='9px "Press Start 2P"';ctx.fillText('A BIRTHDAY QUEST',240,200);
+    const bobY=Math.sin(frame*0.05)*5;
+    drawSprite(ctx,heroRows,hMap,208,280+bobY,4);
+    if(Math.floor(frame/30)%2===0){
+      ctx.fillStyle='#f0e8c8';ctx.font='8px "Press Start 2P"';ctx.textAlign='center';
+      ctx.fillText('TAP  ANYWHERE  TO  START',240,420);
     }
-
     for(let i=0;i<3;i++){
-      const sx = 200+Math.sin(frame*0.07+i*2)*60;
-      const sy = 300+Math.cos(frame*0.05+i)*20;
-      const ss = (Math.sin(frame*0.1+i)+1)*2+1;
-      ctx.fillStyle = '#f7c948'; ctx.fillRect(sx, sy+bobY, ss, ss);
+      const sx=200+Math.sin(frame*0.07+i*2)*60,sy=300+Math.cos(frame*0.05+i)*20;
+      const ss=(Math.sin(frame*0.1+i)+1)*2+1;
+      ctx.fillStyle='#f7c948';ctx.fillRect(sx,sy+bobY,ss,ss);
     }
-
-    frame++;
-    titleAnimId = requestAnimationFrame(drawTitle);
+    frame++;animId=requestAnimationFrame(draw);
   }
-  drawTitle();
-
-  $('title-screen').addEventListener('click', () => {
-    cancelAnimationFrame(titleAnimId);
-    startGame();
-  });
+  draw();
+  function onStart(e){e.preventDefault();cancelAnimationFrame(animId);startGame();}
+  $('title-screen').addEventListener('click', onStart);
+  $('title-screen').addEventListener('touchstart', onStart, {passive:false});
 })();
 
 // ══════════════════════════════════════════════
-//  ADVENTURE GAME ENGINE
+//  MAP DATA
 // ══════════════════════════════════════════════
-const TILE = 16;
-const W = 30, H = 20;
-const T = { GRASS:0,TREE:1,PATH:2,WATER:3,FLOWER:4,CHEST:5,DOOR:6,WALL:7,BRIDGE:8,DARK:9,ROCK:10,SIGN:11 };
-const TILE_COLORS = {
-  [T.GRASS]: ['#52c94a','#3ba334','#47b33d','#5dd954'],
-  [T.TREE]:  ['#2d6a2d','#1e4e1e','#3a7a3a','#1a1a0a'],
-  [T.PATH]:  ['#c8a76a','#b8955a','#d4b87a','#c09050'],
-  [T.WATER]: ['#4fa8e8','#3a8fd4','#60b8f0','#2a78c0'],
-  [T.FLOWER]:['#52c94a','#ff6b8a','#ffaacc','#ffd700'],
-  [T.CHEST]: ['#c8922a','#8B6914','#f0c060','#4a3010'],
-  [T.DOOR]:  ['#8B4513','#6b3010','#c07840','#5a2e0a'],
-  [T.WALL]:  ['#808080','#606060','#a0a0a0','#505050'],
-  [T.BRIDGE]:['#c8a76a','#a07840','#e0c080','#806030'],
-  [T.DARK]:  ['#1a1a2e','#0d0d1a','#2a2a40','#151528'],
-  [T.ROCK]:  ['#909090','#707070','#b0b0b0','#606060'],
-  [T.SIGN]:  ['#8B4513','#c07840','#f0e8c8','#6b3010'],
+const MW=30,MH=20;
+const T={GRASS:0,TREE:1,PATH:2,WATER:3,FLOWER:4,CHEST:5,DOOR:6,WALL:7,BRIDGE:8,DARK:9,ROCK:10,SIGN:11};
+const TC={
+  [0]:['#52c94a','#3ba334','#47b33d','#5dd954'],
+  [1]:['#2d6a2d','#1e4e1e','#3a7a3a','#1a1a0a'],
+  [2]:['#c8a76a','#b8955a','#d4b87a','#c09050'],
+  [3]:['#4fa8e8','#3a8fd4','#60b8f0','#2a78c0'],
+  [4]:['#52c94a','#ff6b8a','#ffaacc','#ffd700'],
+  [5]:['#c8922a','#8B6914','#f0c060','#4a3010'],
+  [6]:['#8B4513','#6b3010','#c07840','#5a2e0a'],
+  [7]:['#808080','#606060','#a0a0a0','#505050'],
+  [8]:['#c8a76a','#a07840','#e0c080','#806030'],
+  [9]:['#1a1a2e','#0d0d1a','#2a2a40','#151528'],
+  [10]:['#909090','#707070','#b0b0b0','#606060'],
+  [11]:['#8B4513','#c07840','#f0e8c8','#6b3010'],
 };
 
-const scenes = [
+const scenes=[
   {
-    name:'✦ THE SUNKEN VALE', bgTop:'#9dd8f0', bgBot:'#52c94a',
-    map: buildMap1(), startX:4, startY:10,
+    name:'✦ THE SUNKEN VALE',bgTop:'#9dd8f0',bgBot:'#52c94a',
+    map:buildMap1(),startX:4,startY:10,
     npcs:[
-      {x:8, y:5, sprite:'old', name:'Elder Moss', lines:['Ah, a traveller!','Today is a special day...','Someone very special was born 20 years ago!','Go find the Birthday Star!','It lies beyond the Mushroom Hills!']},
-      {x:20,y:8, sprite:'girl',name:'Lily',       lines:['Happy birthday vibes!','I heard Anushka turns 20 today!','She\'s going on the adventure of a lifetime!','Go north through the cave!']},
-      {x:14,y:14,sprite:'bunny',name:'Bun-Bun',   lines:['Squeak!','I hid a birthday gift','somewhere in this valley!','Maybe near the big oak...']},
+      {x:8,y:5,sprite:'old',name:'Elder Moss',lines:['Ah, a traveller!','Today is a special day...','Someone very special was born 20 years ago!','Go find the Birthday Star!','It lies beyond the Mushroom Hills!']},
+      {x:20,y:8,sprite:'girl',name:'Lily',lines:['Happy birthday vibes!','I heard Anushka turns 20 today!','She\'s going on the adventure of a lifetime!','Go north through the cave!']},
+      {x:14,y:14,sprite:'bunny',name:'Bun-Bun',lines:['Squeak!','I hid a birthday gift','somewhere in this valley!','Maybe near the big oak...']},
     ],
-    exitTile:{x:14,y:1}, nextScene:1,
+    exitTile:{x:14,y:1},nextScene:1,
     collectibles:[{x:25,y:14,id:'cake_slice',label:'🍰 Cake Slice',msg:'You found a slice of cake! Someone is celebrating...'}],
   },
   {
-    name:'✦ MUSHROOM HILLS', bgTop:'#d4a0e0', bgBot:'#7a4fa0',
-    map: buildMap2(), startX:14, startY:18,
+    name:'✦ MUSHROOM HILLS',bgTop:'#d4a0e0',bgBot:'#7a4fa0',
+    map:buildMap2(),startX:14,startY:18,
     npcs:[
-      {x:7, y:6, sprite:'witch',name:'Zara',    lines:['Welcome to Mushroom Hills!','The birthday castle lies ahead!','But first — can you feel it?','The magic of turning twenty!','Twenty is the start of everything real.']},
-      {x:22,y:10,sprite:'fox',  name:'Fennick', lines:['I\'ve been waiting for you!','These mushrooms glow because','someone wonderful is being celebrated!','Anushka, the brave adventurer!']},
+      {x:7,y:6,sprite:'witch',name:'Zara',lines:['Welcome to Mushroom Hills!','The birthday castle lies ahead!','But first — can you feel it?','The magic of turning twenty!','Twenty is the start of everything real.']},
+      {x:22,y:10,sprite:'fox',name:'Fennick',lines:['I\'ve been waiting for you!','These mushrooms glow because','someone wonderful is being celebrated!','Anushka, the brave adventurer!']},
     ],
-    exitTile:{x:14,y:1}, nextScene:2,
+    exitTile:{x:14,y:1},nextScene:2,
     collectibles:[{x:4,y:3,id:'star',label:'⭐ Wishing Star',msg:'A star fell here just for you, Anushka!'}],
   },
   {
-    name:'✦ BIRTHDAY CASTLE', bgTop:'#ffb347', bgBot:'#ff6b8a',
-    map: buildMap3(), startX:14, startY:18,
+    name:'✦ BIRTHDAY CASTLE',bgTop:'#ffb347',bgBot:'#ff6b8a',
+    map:buildMap3(),startX:14,startY:18,
     npcs:[
-      {x:14,y:8, sprite:'fairy', name:'Celeste',   lines:['You made it to the Birthday Castle!','This magical place appears','only once every year...','On YOUR birthday!','Anushka — happy 20th!!','Go to the throne room!','Your party awaits! ✨']},
-      {x:7, y:5, sprite:'knight',name:'Sir Puffin',lines:['The cake is ready!','Twenty candles, all lined up!','Shall we celebrate?']},
+      {x:14,y:8,sprite:'fairy',name:'Celeste',lines:['You made it to the Birthday Castle!','This magical place appears','only once every year...','On YOUR birthday!','Anushka — happy 20th!!','Go to the throne room!','Your party awaits! ✨']},
+      {x:7,y:5,sprite:'knight',name:'Sir Puffin',lines:['The cake is ready!','Twenty candles, all lined up!','Shall we celebrate?']},
     ],
-    exitTile:{x:14,y:1}, nextScene:'celebration',
+    exitTile:{x:14,y:1},nextScene:'celebration',
     collectibles:[],
   }
 ];
 
-function buildMap1() {
-  const m = Array.from({length:H}, () => Array(W).fill(T.GRASS));
-  for(let x=0;x<W;x++){m[0][x]=T.TREE;m[H-1][x]=T.TREE;}
-  for(let y=0;y<H;y++){m[y][0]=T.TREE;m[y][W-1]=T.TREE;}
-  for(let y=1;y<H-1;y++){m[y][14]=T.PATH;m[y][13]=T.PATH;}
-  for(let x=5;x<W-1;x++){m[11][x]=T.WATER;m[12][x]=T.WATER;}
+function buildMap1(){
+  const m=Array.from({length:MH},()=>Array(MW).fill(T.GRASS));
+  for(let x=0;x<MW;x++){m[0][x]=T.TREE;m[MH-1][x]=T.TREE;}
+  for(let y=0;y<MH;y++){m[y][0]=T.TREE;m[y][MW-1]=T.TREE;}
+  for(let y=1;y<MH-1;y++){m[y][14]=T.PATH;m[y][13]=T.PATH;}
+  for(let x=5;x<MW-1;x++){m[11][x]=T.WATER;m[12][x]=T.WATER;}
   m[11][14]=T.BRIDGE;m[12][14]=T.BRIDGE;m[11][13]=T.BRIDGE;m[12][13]=T.BRIDGE;
   [[3,3],[5,7],[18,3],[22,6],[8,15],[25,3],[26,7]].forEach(([x,y])=>m[y][x]=T.FLOWER);
-  m[6][25]=T.CHEST; m[13][14]=T.SIGN;
+  m[6][25]=T.CHEST;m[13][14]=T.SIGN;
   [[10,6],[11,7],[9,8]].forEach(([x,y])=>m[y][x]=T.ROCK);
-  m[1][14]=T.DOOR; m[1][13]=T.DOOR;
+  m[1][14]=T.DOOR;m[1][13]=T.DOOR;
   return m;
 }
-
-function buildMap2() {
-  const m = Array.from({length:H}, () => Array(W).fill(T.DARK));
-  for(let y=3;y<H-1;y++) for(let x=1;x<W-1;x++) m[y][x]=T.GRASS;
-  for(let x=0;x<W;x++){m[0][x]=T.WALL;m[H-1][x]=T.WALL;}
-  for(let y=0;y<H;y++){m[y][0]=T.WALL;m[y][W-1]=T.WALL;}
-  for(let y=2;y<H-1;y++){m[y][14]=T.PATH;m[y][13]=T.PATH;}
-  for(let i=0;i<20;i++) m[randi(4,H-2)][randi(1,W-2)]=T.FLOWER;
+function buildMap2(){
+  const m=Array.from({length:MH},()=>Array(MW).fill(T.DARK));
+  for(let y=3;y<MH-1;y++)for(let x=1;x<MW-1;x++)m[y][x]=T.GRASS;
+  for(let x=0;x<MW;x++){m[0][x]=T.WALL;m[MH-1][x]=T.WALL;}
+  for(let y=0;y<MH;y++){m[y][0]=T.WALL;m[y][MW-1]=T.WALL;}
+  for(let y=2;y<MH-1;y++){m[y][14]=T.PATH;m[y][13]=T.PATH;}
+  for(let i=0;i<20;i++)m[randi(4,MH-2)][randi(1,MW-2)]=T.FLOWER;
   [[5,5],[6,5],[5,6],[15,12],[16,12],[15,13]].forEach(([x,y])=>m[y][x]=T.ROCK);
-  m[2][14]=T.DOOR; m[2][13]=T.DOOR;
-  for(let x=18;x<25;x++) for(let y=13;y<17;y++) m[y][x]=T.WATER;
+  m[2][14]=T.DOOR;m[2][13]=T.DOOR;
+  for(let x=18;x<25;x++)for(let y=13;y<17;y++)m[y][x]=T.WATER;
   return m;
 }
-
-function buildMap3() {
-  const m = Array.from({length:H}, () => Array(W).fill(T.WALL));
-  for(let y=2;y<H-1;y++) for(let x=2;x<W-2;x++) m[y][x]=T.PATH;
-  for(let y=2;y<H;y++){m[y][14]=T.FLOWER;m[y][13]=T.FLOWER;}
+function buildMap3(){
+  const m=Array.from({length:MH},()=>Array(MW).fill(T.WALL));
+  for(let y=2;y<MH-1;y++)for(let x=2;x<MW-2;x++)m[y][x]=T.PATH;
+  for(let y=2;y<MH;y++){m[y][14]=T.FLOWER;m[y][13]=T.FLOWER;}
   [[4,4],[4,14],[25,4],[25,14],[4,9],[25,9]].forEach(([x,y])=>m[y][x]=T.ROCK);
-  m[H-2][14]=T.DOOR; m[H-2][13]=T.DOOR;
-  m[2][14]=T.CHEST; m[2][13]=T.CHEST;
-  m[1][14]=T.DOOR; m[1][13]=T.DOOR;
+  m[MH-2][14]=T.DOOR;m[MH-2][13]=T.DOOR;
+  m[2][14]=T.CHEST;m[2][13]=T.CHEST;
+  m[1][14]=T.DOOR;m[1][13]=T.DOOR;
   return m;
 }
 
-const SPRITES = {};
-function initSprites() {
-  function drawSpriteFunc(rows, cmap, w, h, scale) {
-    const off = document.createElement('canvas');
-    off.width=w*scale; off.height=h*scale;
-    const oc=off.getContext('2d');
+// ══════════════════════════════════════════════
+//  SPRITES
+// ══════════════════════════════════════════════
+const SPRITES={};
+function initSprites(){
+  function mk(rows,cmap,w,h,sc){
+    const o=document.createElement('canvas');o.width=w*sc;o.height=h*sc;
+    const c=o.getContext('2d');
     rows.forEach((row,ry)=>[...row].forEach((ch,rx)=>{
-      const col=cmap[ch]; if(col){oc.fillStyle=col;oc.fillRect(rx*scale,ry*scale,scale,scale);}
+      const col=cmap[ch];if(col){c.fillStyle=col;c.fillRect(rx*sc,ry*sc,sc,sc);}
     }));
-    return off;
+    return o;
   }
-
-  function drawNPCSprite(skinColor, shirtColor, pantsColor) {
-    const off=document.createElement('canvas'); off.width=24;off.height=32;
-    const oc=off.getContext('2d');
-    oc.fillStyle=skinColor;oc.fillRect(8,0,8,8);
-    oc.fillStyle='#1a0a00';oc.fillRect(9,3,2,2);oc.fillRect(13,3,2,2);
-    oc.fillStyle=shirtColor;oc.fillRect(6,8,12,10);
-    oc.fillStyle=pantsColor;oc.fillRect(7,18,4,8);oc.fillRect(13,18,4,8);
-    oc.fillStyle='#3a2010';oc.fillRect(7,26,4,4);oc.fillRect(13,26,4,4);
-    return off;
+  function npc(skin,shirt,pants){
+    const o=document.createElement('canvas');o.width=24;o.height=32;const c=o.getContext('2d');
+    c.fillStyle=skin;c.fillRect(8,0,8,8);
+    c.fillStyle='#1a0a00';c.fillRect(9,3,2,2);c.fillRect(13,3,2,2);
+    c.fillStyle=shirt;c.fillRect(6,8,12,10);
+    c.fillStyle=pants;c.fillRect(7,18,4,8);c.fillRect(13,18,4,8);
+    c.fillStyle='#3a2010';c.fillRect(7,26,4,4);c.fillRect(13,26,4,4);
+    return o;
   }
-
-  function drawBunnySprite() {
-    const off=document.createElement('canvas');off.width=24;off.height=32;
-    const oc=off.getContext('2d');
-    oc.fillStyle='#f0f0f0';
-    oc.fillRect(8,0,3,8);oc.fillRect(13,0,3,8);
-    oc.fillStyle='#ffb6c1';oc.fillRect(9,1,1,6);oc.fillRect(14,1,1,6);
-    oc.fillStyle='#f0f0f0';oc.fillRect(6,6,12,10);
-    oc.fillStyle='#ff6b8a';oc.fillRect(8,10,2,2);oc.fillRect(14,10,2,2);
-    oc.fillStyle='#ffaacc';oc.fillRect(11,12,2,1);
-    oc.fillStyle='#f0f0f0';oc.fillRect(5,16,14,10);oc.fillRect(18,20,4,4);
-    return off;
+  function bunny(){
+    const o=document.createElement('canvas');o.width=24;o.height=32;const c=o.getContext('2d');
+    c.fillStyle='#f0f0f0';c.fillRect(8,0,3,8);c.fillRect(13,0,3,8);c.fillRect(6,6,12,10);c.fillRect(5,16,14,10);c.fillRect(18,20,4,4);
+    c.fillStyle='#ffb6c1';c.fillRect(9,1,1,6);c.fillRect(14,1,1,6);
+    c.fillStyle='#ff6b8a';c.fillRect(8,10,2,2);c.fillRect(14,10,2,2);
+    return o;
   }
-
-  function drawFoxSprite() {
-    const off=document.createElement('canvas');off.width=24;off.height=32;
-    const oc=off.getContext('2d');
-    oc.fillStyle='#e87040';oc.fillRect(6,0,5,6);oc.fillRect(13,0,5,6);
-    oc.fillStyle='#f7c9a0';oc.fillRect(7,1,3,4);oc.fillRect(14,1,3,4);
-    oc.fillStyle='#e87040';oc.fillRect(5,4,14,10);
-    oc.fillStyle='#f7c9a0';oc.fillRect(7,10,10,4);
-    oc.fillStyle='#1a0a00';oc.fillRect(8,7,2,2);oc.fillRect(14,7,2,2);
-    oc.fillStyle='#e87040';oc.fillRect(6,14,12,10);oc.fillRect(18,16,5,8);
-    oc.fillStyle='#f0f0f0';oc.fillRect(20,20,3,4);
-    return off;
+  function fox(){
+    const o=document.createElement('canvas');o.width=24;o.height=32;const c=o.getContext('2d');
+    c.fillStyle='#e87040';c.fillRect(6,0,5,6);c.fillRect(13,0,5,6);c.fillRect(5,4,14,10);c.fillRect(6,14,12,10);c.fillRect(18,16,5,8);
+    c.fillStyle='#f7c9a0';c.fillRect(7,1,3,4);c.fillRect(14,1,3,4);c.fillRect(7,10,10,4);
+    c.fillStyle='#1a0a00';c.fillRect(8,7,2,2);c.fillRect(14,7,2,2);
+    c.fillStyle='#f0f0f0';c.fillRect(20,20,3,4);
+    return o;
   }
-
-  const hcmap={'h':'#7a4a00','s':'#f7c99e','e':'#1a0a00','m':'#c0392b','b':'#e84040','l':'#2c3e6e','i':'#fff','.':null};
-  SPRITES.hero = drawSpriteFunc([
-    '....hhhh....','...hssssh...','..hsssssssh.','..hseesseh..',
-    '..hsssssssh.','..hssmmsssh.','...hmmmmmh..','....hsssh...',
-    '..bbbhshbbb.','..bbbhshbbb.','...bbhshbb..','....bbbbb...',
-    '....ll.ll...','....ll.ll...','....ss.ss...','....ss.ss...',
-  ], hcmap, 12, 16, 2);
-  SPRITES.hero_walk = drawSpriteFunc([
-    '....hhhh....','...hssssh...','..hsssssssh.','..hseesseh..',
-    '..hsssssssh.','..hssmmsssh.','...hmmmmmh..','....hsssh...',
-    '..bbbhshbbb.','..bbbhshbbb.','...bbhshbb..','....bbbbb...',
-    '...ll..ll...','..ll....ll..','..ss....ss..','...ss....ss.',
-  ], hcmap, 12, 16, 2);
-
-  SPRITES.old   = drawNPCSprite('#d4c4a0','#6a3e1b','#5a5a5a');
-  SPRITES.girl  = drawNPCSprite('#f7c99e','#ff9ecc','#4a90d9');
-  SPRITES.witch = drawNPCSprite('#c4a0f7','#4a007a','#2a006a');
-  SPRITES.fairy = drawNPCSprite('#ffccee','#ff6b9a','#ffd700');
-  SPRITES.knight= drawNPCSprite('#d0d0d0','#808080','#4a4a60');
-  SPRITES.bunny = drawBunnySprite();
-  SPRITES.fox   = drawFoxSprite();
+  const hm={'h':'#7a4a00','s':'#f7c99e','e':'#1a0a00','m':'#c0392b','b':'#e84040','l':'#2c3e6e','.':null};
+  const hr=['....hhhh....','...hssssh...','..hsssssssh.','..hseesseh..','..hsssssssh.','..hssmmsssh.','...hmmmmmh..','....hsssh...','..bbbhshbbb.','..bbbhshbbb.','...bbhshbb..','....bbbbb....','....ll.ll...','....ll.ll...','....ss.ss...','....ss.ss...'];
+  const hw=['....hhhh....','...hssssh...','..hsssssssh.','..hseesseh..','..hsssssssh.','..hssmmsssh.','...hmmmmmh..','....hsssh...','..bbbhshbbb.','..bbbhshbbb.','...bbhshbb..','....bbbbb....','...ll..ll...','..ll....ll..','..ss....ss..','...ss....ss.'];
+  SPRITES.hero=mk(hr,hm,12,16,2); SPRITES.hero_walk=mk(hw,hm,12,16,2);
+  SPRITES.old=npc('#d4c4a0','#6a3e1b','#5a5a5a'); SPRITES.girl=npc('#f7c99e','#ff9ecc','#4a90d9');
+  SPRITES.witch=npc('#c4a0f7','#4a007a','#2a006a'); SPRITES.fairy=npc('#ffccee','#ff6b9a','#ffd700');
+  SPRITES.knight=npc('#d0d0d0','#808080','#4a4a60');
+  SPRITES.bunny=bunny(); SPRITES.fox=fox();
 }
 
 // ══════════════════════════════════════════════
-//  GAME STATE
+//  GAME STATE & LOOP
 // ══════════════════════════════════════════════
-let gState = {
-  scene:0, px:4, py:10,
-  frame:0, walkCycle:0,
-  collected:new Set(),
-  talking:null, msgQueue:null,
-  cameraX:0, cameraY:0,
-};
-const keys = {};
-let gameRunning = false;
-let gameAnimId = null;
+let gState={scene:0,px:4,py:10,frame:0,walkCycle:0,collected:new Set(),talking:null,msgQueue:null,cameraX:0,cameraY:0};
+const keys={};
+let gameRunning=false,gameAnimId=null;
 
-function startGame() {
-  $('title-screen').style.display = 'none';
-  $('game-canvas').style.display = 'block';
-  $('ui-bar').style.display = 'flex';
-  gameRunning = true;
+function startGame(){
+  $('title-screen').style.display='none';
+  $('game-canvas').style.display='block';
+  $('ui-bar').style.display='flex';
+  gameRunning=true;
   initSprites();
   loadScene(0);
   gameLoop();
+  if(isTouchDevice()) showTouchControls(true);
 }
 
-function loadScene(idx) {
-  if(idx === 'celebration') { startCelebration(); return; }
-  const s = scenes[idx];
-  gState.scene = idx;
-  gState.px = s.startX;
-  gState.py = s.startY;
-  gState.talking = null;
-  gState.msgQueue = null;
-  $('location-label').textContent = s.name;
-  $('textbox').style.display = 'none';
+function loadScene(idx){
+  if(idx==='celebration'){startCelebration();return;}
+  const s=scenes[idx];
+  gState.scene=idx;gState.px=s.startX;gState.py=s.startY;
+  gState.talking=null;gState.msgQueue=null;
+  $('location-label').textContent=s.name;
+  $('textbox').style.display='none';
 }
 
-document.addEventListener('keydown', e => {
-  keys[e.key] = true;
-  if(['z','Z',' ','Enter'].includes(e.key)) {
-    if(gState.talking || gState.msgQueue) advanceDialog();
-    else tryInteract();
-  }
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+document.addEventListener('keydown',e=>{
+  keys[e.key]=true;
+  if(['z','Z',' ','Enter'].includes(e.key)){if(gState.talking||gState.msgQueue)advanceDialog();else tryInteract();}
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
 });
-document.addEventListener('keyup', e => keys[e.key] = false);
+document.addEventListener('keyup',e=>keys[e.key]=false);
 
-let dialogTyping = null;
-let dialogFull = '';
-let dialogDone = false;
-
-function showDialog(text) {
-  $('textbox').style.display = 'block';
-  $('textbox-arrow').style.display = 'none';
-  dialogFull = text; dialogDone = false;
-  $('textbox-inner').textContent = '';
-  let i = 0;
-  clearInterval(dialogTyping);
-  dialogTyping = setInterval(() => {
-    $('textbox-inner').textContent += dialogFull[i]; i++;
-    if(i >= dialogFull.length) {
-      clearInterval(dialogTyping);
-      dialogDone = true;
-      $('textbox-arrow').style.display = 'block';
-    }
-  }, 30);
+// ── DIALOG ──
+let dialogTyping=null,dialogFull='',dialogDone=false;
+function showDialog(text){
+  $('textbox').style.display='block';$('textbox-arrow').style.display='none';
+  dialogFull=text;dialogDone=false;$('textbox-inner').textContent='';
+  let i=0;clearInterval(dialogTyping);
+  dialogTyping=setInterval(()=>{
+    $('textbox-inner').textContent+=dialogFull[i];i++;
+    if(i>=dialogFull.length){clearInterval(dialogTyping);dialogDone=true;$('textbox-arrow').style.display='block';}
+  },30);
 }
-
-function advanceDialog() {
-  if(!dialogDone) {
-    clearInterval(dialogTyping);
-    $('textbox-inner').textContent = dialogFull;
-    dialogDone = true;
-    $('textbox-arrow').style.display = 'block';
+function advanceDialog(){
+  if(!dialogDone){
+    clearInterval(dialogTyping);$('textbox-inner').textContent=dialogFull;
+    dialogDone=true;$('textbox-arrow').style.display='block';return;
+  }
+  if(gState.talking){
+    const npc=gState.talking.npc;gState.talking.lineIndex++;
+    if(gState.talking.lineIndex<npc.lines.length)showDialog(npc.name+': '+npc.lines[gState.talking.lineIndex]);
+    else{gState.talking=null;$('textbox').style.display='none';}
     return;
   }
-  if(gState.talking) {
-    const npc = gState.talking.npc;
-    gState.talking.lineIndex++;
-    if(gState.talking.lineIndex < npc.lines.length) {
-      showDialog(npc.name+': '+npc.lines[gState.talking.lineIndex]);
-    } else {
-      gState.talking = null;
-      $('textbox').style.display = 'none';
-    }
-    return;
-  }
-  if(gState.msgQueue) {
-    $('textbox').style.display = 'none';
-    gState.msgQueue = null;
-  }
+  if(gState.msgQueue){$('textbox').style.display='none';gState.msgQueue=null;}
 }
-
-function tryInteract() {
-  const s = scenes[gState.scene];
-  const { px, py } = gState;
-  for(const npc of s.npcs) {
-    const dx=Math.abs(npc.x-px), dy=Math.abs(npc.y-py);
-    if(dx<=1&&dy<=1&&(dx+dy)<=2){
-      gState.talking={npc,lineIndex:0};
-      showDialog(npc.name+': '+npc.lines[0]);
-      return;
-    }
+function tryInteract(){
+  const s=scenes[gState.scene],{px,py}=gState;
+  for(const npc of s.npcs){
+    const dx=Math.abs(npc.x-px),dy=Math.abs(npc.y-py);
+    if(dx<=1&&dy<=1&&dx+dy<=2){gState.talking={npc,lineIndex:0};showDialog(npc.name+': '+npc.lines[0]);return;}
   }
-  for(const c of s.collectibles) {
+  for(const c of s.collectibles){
     if(c.x===px&&c.y===py&&!gState.collected.has(c.id)){
-      gState.collected.add(c.id);
-      gState.msgQueue = c.msg;
-      showDialog('✦ '+c.label+' obtained!\n'+c.msg);
-      return;
+      gState.collected.add(c.id);gState.msgQueue=c.msg;showDialog('✦ '+c.label+' obtained!\n'+c.msg);return;
     }
   }
-  const tile = s.map[py]?.[px];
-  if(tile===T.SIGN) showDialog('Sign: "Welcome to the Sunken Vale!\nHappy 20th Birthday Anushka!"\n[17 May 2006  →  17 May 2026]');
+  const tile=s.map[py]?.[px];
+  if(tile===T.SIGN)showDialog('Sign: "Welcome to the Sunken Vale!\nHappy 20th Birthday Anushka!"\n[17 May 2006 → 17 May 2026]');
 }
 
-let moveTimer = 0;
-const MOVE_DELAY = 12;
-
-function updateMovement() {
-  if(gState.talking||gState.msgQueue) return;
-  moveTimer--;
-  if(moveTimer>0) return;
+// ── MOVEMENT ──
+let moveTimer=0;
+const MOVE_DELAY=12;
+function updateMovement(){
+  if(gState.talking||gState.msgQueue)return;
+  moveTimer--;if(moveTimer>0)return;
   let dx=0,dy=0;
-  if(keys['ArrowUp']||keys['w']||keys['W']) dy=-1;
-  else if(keys['ArrowDown']||keys['s']||keys['S']) dy=1;
-  else if(keys['ArrowLeft']||keys['a']||keys['A']) dx=-1;
-  else if(keys['ArrowRight']||keys['d']||keys['D']) dx=1;
-  if(dx===0&&dy===0) return;
-  const s = scenes[gState.scene];
-  const nx=gState.px+dx, ny=gState.py+dy;
-  if(nx===s.exitTile.x&&ny===s.exitTile.y){ loadScene(s.nextScene); moveTimer=MOVE_DELAY; return; }
-  if(nx<0||nx>=W||ny<0||ny>=H) return;
+  const up=keys['ArrowUp']   ||keys['w']||keys['W']||touchKeys['ArrowUp'];
+  const dn=keys['ArrowDown'] ||keys['s']||keys['S']||touchKeys['ArrowDown'];
+  const lt=keys['ArrowLeft'] ||keys['a']||keys['A']||touchKeys['ArrowLeft'];
+  const rt=keys['ArrowRight']||keys['d']||keys['D']||touchKeys['ArrowRight'];
+  if(up)dy=-1;else if(dn)dy=1;else if(lt)dx=-1;else if(rt)dx=1;
+  if(!dx&&!dy)return;
+  const s=scenes[gState.scene],nx=gState.px+dx,ny=gState.py+dy;
+  if(nx===s.exitTile.x&&ny===s.exitTile.y){loadScene(s.nextScene);moveTimer=MOVE_DELAY;return;}
+  if(nx<0||nx>=MW||ny<0||ny>=MH)return;
   const tile=s.map[ny][nx];
-  if([T.TREE,T.WATER,T.WALL,T.ROCK].includes(tile)) return;
-  for(const npc of s.npcs) if(npc.x===nx&&npc.y===ny) return;
-  gState.px=nx; gState.py=ny;
-  gState.walkCycle=(gState.walkCycle+1)%2;
-  moveTimer=MOVE_DELAY;
+  if([T.TREE,T.WATER,T.WALL,T.ROCK].includes(tile))return;
+  for(const npc of s.npcs)if(npc.x===nx&&npc.y===ny)return;
+  gState.px=nx;gState.py=ny;gState.walkCycle=(gState.walkCycle+1)%2;moveTimer=MOVE_DELAY;
 }
 
-const VIEWPORT_W=15, VIEWPORT_H=10;
-function updateCamera() {
-  gState.cameraX=Math.max(0,Math.min(W-VIEWPORT_W, gState.px-Math.floor(VIEWPORT_W/2)));
-  gState.cameraY=Math.max(0,Math.min(H-VIEWPORT_H, gState.py-Math.floor(VIEWPORT_H/2)));
+const VW=15,VH=10;
+function updateCamera(){
+  gState.cameraX=Math.max(0,Math.min(MW-VW,gState.px-Math.floor(VW/2)));
+  gState.cameraY=Math.max(0,Math.min(MH-VH,gState.py-Math.floor(VH/2)));
 }
 
-function render(ctx) {
-  const s=scenes[gState.scene];
-  const ts=TILE*2;
+// ── RENDER ──
+function render(ctx){
+  const s=scenes[gState.scene],ts=32;
   ctx.imageSmoothingEnabled=false;
-  const grad=ctx.createLinearGradient(0,0,0,320);
-  grad.addColorStop(0,s.bgTop); grad.addColorStop(1,s.bgBot);
-  ctx.fillStyle=grad; ctx.fillRect(0,0,480,320);
-
-  for(let ty=0;ty<VIEWPORT_H;ty++) {
-    for(let tx=0;tx<VIEWPORT_W;tx++) {
-      const mx=gState.cameraX+tx, my=gState.cameraY+ty;
-      const tile=s.map[my]?.[mx]??T.WALL;
-      drawTile(ctx,tile,tx*ts,ty*ts,ts,gState.frame,mx,my,s);
-    }
+  const g=ctx.createLinearGradient(0,0,0,320);
+  g.addColorStop(0,s.bgTop);g.addColorStop(1,s.bgBot);
+  ctx.fillStyle=g;ctx.fillRect(0,0,480,320);
+  for(let ty=0;ty<VH;ty++)for(let tx=0;tx<VW;tx++){
+    const mx=gState.cameraX+tx,my=gState.cameraY+ty;
+    drawTile(ctx,s.map[my]?.[mx]??T.WALL,tx*ts,ty*ts,ts,gState.frame,mx,my);
   }
-
-  for(const c of s.collectibles) {
-    if(gState.collected.has(c.id)) continue;
-    const sx=(c.x-gState.cameraX)*ts, sy=(c.y-gState.cameraY)*ts;
-    if(sx<0||sx>=480||sy<0||sy>=320) continue;
-    const bob=Math.sin(gState.frame*0.1)*3;
-    ctx.fillStyle='#ffd700';
-    ctx.font='18px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('⭐',sx+ts/2,sy+ts/2+bob);
+  for(const c of s.collectibles){
+    if(gState.collected.has(c.id))continue;
+    const sx=(c.x-gState.cameraX)*ts,sy=(c.y-gState.cameraY)*ts;
+    if(sx<0||sx>=480||sy<0||sy>=320)continue;
+    ctx.font='18px sans-serif';ctx.textAlign='center';
+    ctx.fillText('⭐',sx+ts/2,sy+ts/2+Math.sin(gState.frame*0.1)*3);
   }
-
-  for(const npc of s.npcs) {
-    const sx=(npc.x-gState.cameraX)*ts, sy=(npc.y-gState.cameraY)*ts;
-    if(sx<-ts||sx>480||sy<-ts||sy>320) continue;
-    const sprite=SPRITES[npc.sprite];
-    if(sprite) ctx.drawImage(sprite,sx,sy-8);
-    ctx.fillStyle='#000a'; ctx.fillRect(sx-4,sy-20,npc.name.length*5+8,12);
-    ctx.fillStyle='#f7c948'; ctx.font='6px "Press Start 2P"'; ctx.textAlign='left';
-    ctx.fillText(npc.name,sx,sy-10);
+  for(const npc of s.npcs){
+    const sx=(npc.x-gState.cameraX)*ts,sy=(npc.y-gState.cameraY)*ts;
+    if(sx<-ts||sx>480||sy<-ts||sy>320)continue;
+    const sp=SPRITES[npc.sprite];if(sp)ctx.drawImage(sp,sx,sy-8);
+    ctx.fillStyle='#000a';ctx.fillRect(sx-4,sy-20,npc.name.length*5+8,12);
+    ctx.fillStyle='#f7c948';ctx.font='6px "Press Start 2P"';ctx.textAlign='left';ctx.fillText(npc.name,sx,sy-10);
   }
-
-  const psx=(gState.px-gState.cameraX)*ts, psy=(gState.py-gState.cameraY)*ts;
-  const heroSprite=gState.walkCycle===0?SPRITES.hero:SPRITES.hero_walk;
-  if(heroSprite) ctx.drawImage(heroSprite,psx-2,psy-8);
-
-  if(!gState.talking&&!gState.msgQueue) {
-    for(const npc of s.npcs) {
-      const dx=Math.abs(npc.x-gState.px), dy=Math.abs(npc.y-gState.py);
+  const psx=(gState.px-gState.cameraX)*ts,psy=(gState.py-gState.cameraY)*ts;
+  const hs=gState.walkCycle===0?SPRITES.hero:SPRITES.hero_walk;
+  if(hs)ctx.drawImage(hs,psx-2,psy-8);
+  if(!gState.talking&&!gState.msgQueue){
+    for(const npc of s.npcs){
+      const dx=Math.abs(npc.x-gState.px),dy=Math.abs(npc.y-gState.py);
       if(dx<=1&&dy<=1&&dx+dy<=2){
-        ctx.fillStyle='#f7c94888'; ctx.fillRect(psx-2,psy-24,40,12);
-        ctx.fillStyle='#fff'; ctx.font='6px "Press Start 2P"';
-        ctx.fillText('SPACE',psx+2,psy-14); break;
+        ctx.fillStyle='#f7c94888';ctx.fillRect(psx-2,psy-24,48,12);
+        ctx.fillStyle='#fff';ctx.font='6px "Press Start 2P"';ctx.fillText('✦ TALK',psx+2,psy-14);break;
       }
     }
   }
 }
 
-function drawTile(ctx, tile, sx, sy, ts, frame, mx, my, scene) {
-  const cols = TILE_COLORS[tile] || TILE_COLORS[T.WALL];
-  ctx.fillStyle=cols[0]; ctx.fillRect(sx,sy,ts,ts);
-  switch(tile) {
-    case T.GRASS: {
-      const v=(mx*3+my*7)%4;
-      ctx.fillStyle=cols[v%2===0?1:2]; ctx.fillRect(sx,sy,ts/2,ts/2);
-      ctx.fillStyle=cols[(v+1)%2===0?1:2]; ctx.fillRect(sx+ts/2,sy+ts/2,ts/2,ts/2);
-      if((mx*5+my*11)%7===0){ctx.fillStyle=cols[3];ctx.fillRect(sx+4,sy+4,8,8);}
-      break;
-    }
-    case T.TREE: {
-      ctx.fillStyle='#5a3a10'; ctx.fillRect(sx+ts/2-4,sy+ts*0.5,8,ts*0.5);
-      ctx.fillStyle=cols[0]; ctx.fillRect(sx+2,sy+4,ts-4,ts*0.6);
-      ctx.fillStyle=cols[1]; ctx.fillRect(sx+4,sy+2,ts-8,ts*0.45);
-      ctx.fillStyle=cols[2]; ctx.fillRect(sx+6,sy,ts-12,ts*0.35);
-      ctx.fillStyle=cols[3]; ctx.fillRect(sx+ts/2-2,sy+2,4,8);
-      break;
-    }
-    case T.PATH: {
-      ctx.fillStyle=cols[(mx+my)%2===0?0:1]; ctx.fillRect(sx,sy,ts,ts);
-      if((mx*13+my*7)%5<2){ctx.fillStyle=cols[3];ctx.fillRect(sx+(mx*7)%20+4,sy+(my*11)%20+4,4,4);}
-      break;
-    }
-    case T.WATER: {
-      const wave=Math.sin(frame*0.05+mx*0.5+my*0.3);
-      ctx.fillStyle=wave>0?cols[0]:cols[1]; ctx.fillRect(sx,sy,ts,ts);
-      const woff=(Math.sin(frame*0.04+mx)*8+8)|0;
-      ctx.fillStyle=cols[2]; ctx.fillRect(sx,sy+woff,ts,4);
-      ctx.fillStyle=cols[3]; ctx.fillRect(sx+4,sy+(woff+ts/2)%ts,ts-8,2);
-      break;
-    }
-    case T.FLOWER: {
-      ctx.fillStyle='#52c94a'; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle='#3ba334'; ctx.fillRect(sx+6,sy+12,2,8); ctx.fillRect(sx+18,sy+14,2,6);
-      const fc=['#ff6b8a','#ffaacc','#ff9f43','#ffd700'][(mx+my)%4];
-      ctx.fillStyle=fc; ctx.fillRect(sx+4,sy+6,6,6); ctx.fillRect(sx+16,sy+8,6,6);
-      ctx.fillStyle='#ffd700'; ctx.fillRect(sx+6,sy+8,2,2); ctx.fillRect(sx+18,sy+10,2,2);
-      break;
-    }
-    case T.WALL: {
-      const bx=mx%2,by=my%2;
-      ctx.fillStyle=bx===by?cols[1]:cols[2]; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle=cols[3]; ctx.fillRect(sx,sy,ts,2); ctx.fillRect(sx,sy,2,ts);
-      break;
-    }
-    case T.BRIDGE: {
-      ctx.fillStyle=cols[0]; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle=cols[1];
-      for(let i=0;i<ts;i+=6) ctx.fillRect(sx+i,sy,3,ts);
-      ctx.fillStyle=cols[3]; ctx.fillRect(sx,sy,ts,3); ctx.fillRect(sx,sy+ts-3,ts,3);
-      break;
-    }
-    case T.CHEST: {
-      ctx.fillStyle=TILE_COLORS[T.PATH][0]; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle=cols[0]; ctx.fillRect(sx+4,sy+10,ts-8,ts-14);
-      ctx.fillStyle=cols[3]; ctx.fillRect(sx+4,sy+8,ts-8,8);
-      ctx.fillStyle=cols[2]; ctx.fillRect(sx+4,sy+8,ts-8,4);
-      ctx.fillStyle='#f7c948'; ctx.fillRect(sx+ts/2-2,sy+16,4,6);
-      break;
-    }
-    case T.DOOR: {
-      ctx.fillStyle=TILE_COLORS[T.WALL][1]; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle=cols[0]; ctx.fillRect(sx+4,sy+2,ts-8,ts-2);
-      ctx.fillStyle=cols[1]; ctx.fillRect(sx+6,sy+4,ts-12,ts-6);
-      ctx.fillStyle=cols[2]; ctx.fillRect(sx+ts/2-1,sy+4,2,ts-6);
-      if(Math.floor(frame/20)%2===0){
-        ctx.fillStyle='#ffd700'; ctx.font='10px sans-serif'; ctx.textAlign='center';
-        ctx.fillText('▲',sx+ts/2,sy+20);
-      }
-      break;
-    }
-    case T.SIGN: {
-      ctx.fillStyle=TILE_COLORS[T.GRASS][0]; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle=cols[0]; ctx.fillRect(sx+5,sy+14,4,10);
-      ctx.fillStyle=cols[2]; ctx.fillRect(sx+2,sy+4,ts-4,12);
-      ctx.fillStyle=cols[3]; ctx.fillRect(sx+4,sy+6,ts-8,8);
-      break;
-    }
-    case T.ROCK: {
-      ctx.fillStyle=TILE_COLORS[T.GRASS][0]; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle=cols[0]; ctx.fillRect(sx+4,sy+10,ts-8,ts-12);
-      ctx.fillStyle=cols[2]; ctx.fillRect(sx+4,sy+8,ts-8,6);
-      ctx.fillStyle=cols[1]; ctx.fillRect(sx+4,sy+10,6,4);
-      break;
-    }
-    case T.DARK: {
-      ctx.fillStyle=cols[0]; ctx.fillRect(sx,sy,ts,ts);
-      ctx.fillStyle=cols[2];
-      if((mx+my)%3===0) ctx.fillRect(sx+4,sy+4,4,4);
-      break;
-    }
+function drawTile(ctx,tile,sx,sy,ts,frame,mx,my){
+  const cols=TC[tile]||TC[7];
+  ctx.fillStyle=cols[0];ctx.fillRect(sx,sy,ts,ts);
+  switch(tile){
+    case T.GRASS:{const v=(mx*3+my*7)%4;ctx.fillStyle=cols[v%2?1:2];ctx.fillRect(sx,sy,ts/2,ts/2);ctx.fillStyle=cols[(v+1)%2?1:2];ctx.fillRect(sx+ts/2,sy+ts/2,ts/2,ts/2);if((mx*5+my*11)%7===0){ctx.fillStyle=cols[3];ctx.fillRect(sx+4,sy+4,8,8);}break;}
+    case T.TREE:{ctx.fillStyle='#5a3a10';ctx.fillRect(sx+ts/2-4,sy+ts*.5,8,ts*.5);ctx.fillStyle=cols[0];ctx.fillRect(sx+2,sy+4,ts-4,ts*.6);ctx.fillStyle=cols[1];ctx.fillRect(sx+4,sy+2,ts-8,ts*.45);ctx.fillStyle=cols[2];ctx.fillRect(sx+6,sy,ts-12,ts*.35);ctx.fillStyle=cols[3];ctx.fillRect(sx+ts/2-2,sy+2,4,8);break;}
+    case T.PATH:{ctx.fillStyle=cols[(mx+my)%2?0:1];ctx.fillRect(sx,sy,ts,ts);if((mx*13+my*7)%5<2){ctx.fillStyle=cols[3];ctx.fillRect(sx+(mx*7)%20+4,sy+(my*11)%20+4,4,4);}break;}
+    case T.WATER:{const w=Math.sin(frame*.05+mx*.5+my*.3);ctx.fillStyle=w>0?cols[0]:cols[1];ctx.fillRect(sx,sy,ts,ts);const wo=(Math.sin(frame*.04+mx)*8+8)|0;ctx.fillStyle=cols[2];ctx.fillRect(sx,sy+wo,ts,4);ctx.fillStyle=cols[3];ctx.fillRect(sx+4,sy+(wo+ts/2)%ts,ts-8,2);break;}
+    case T.FLOWER:{ctx.fillStyle='#52c94a';ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle='#3ba334';ctx.fillRect(sx+6,sy+12,2,8);ctx.fillRect(sx+18,sy+14,2,6);ctx.fillStyle=['#ff6b8a','#ffaacc','#ff9f43','#ffd700'][(mx+my)%4];ctx.fillRect(sx+4,sy+6,6,6);ctx.fillRect(sx+16,sy+8,6,6);ctx.fillStyle='#ffd700';ctx.fillRect(sx+6,sy+8,2,2);ctx.fillRect(sx+18,sy+10,2,2);break;}
+    case T.WALL:{ctx.fillStyle=mx%2===my%2?cols[1]:cols[2];ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle=cols[3];ctx.fillRect(sx,sy,ts,2);ctx.fillRect(sx,sy,2,ts);break;}
+    case T.BRIDGE:{ctx.fillStyle=cols[0];ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle=cols[1];for(let i=0;i<ts;i+=6)ctx.fillRect(sx+i,sy,3,ts);ctx.fillStyle=cols[3];ctx.fillRect(sx,sy,ts,3);ctx.fillRect(sx,sy+ts-3,ts,3);break;}
+    case T.CHEST:{ctx.fillStyle=TC[2][0];ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle=cols[0];ctx.fillRect(sx+4,sy+10,ts-8,ts-14);ctx.fillStyle=cols[3];ctx.fillRect(sx+4,sy+8,ts-8,8);ctx.fillStyle=cols[2];ctx.fillRect(sx+4,sy+8,ts-8,4);ctx.fillStyle='#f7c948';ctx.fillRect(sx+ts/2-2,sy+16,4,6);break;}
+    case T.DOOR:{ctx.fillStyle=TC[7][1];ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle=cols[0];ctx.fillRect(sx+4,sy+2,ts-8,ts-2);ctx.fillStyle=cols[1];ctx.fillRect(sx+6,sy+4,ts-12,ts-6);ctx.fillStyle=cols[2];ctx.fillRect(sx+ts/2-1,sy+4,2,ts-6);if(Math.floor(frame/20)%2===0){ctx.fillStyle='#ffd700';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('▲',sx+ts/2,sy+20);}break;}
+    case T.SIGN:{ctx.fillStyle=TC[0][0];ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle=cols[0];ctx.fillRect(sx+5,sy+14,4,10);ctx.fillStyle=cols[2];ctx.fillRect(sx+2,sy+4,ts-4,12);ctx.fillStyle=cols[3];ctx.fillRect(sx+4,sy+6,ts-8,8);break;}
+    case T.ROCK:{ctx.fillStyle=TC[0][0];ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle=cols[0];ctx.fillRect(sx+4,sy+10,ts-8,ts-12);ctx.fillStyle=cols[2];ctx.fillRect(sx+4,sy+8,ts-8,6);ctx.fillStyle=cols[1];ctx.fillRect(sx+4,sy+10,6,4);break;}
+    case T.DARK:{ctx.fillStyle=cols[0];ctx.fillRect(sx,sy,ts,ts);ctx.fillStyle=cols[2];if((mx+my)%3===0)ctx.fillRect(sx+4,sy+4,4,4);break;}
   }
 }
 
-function gameLoop() {
-  if(!gameRunning) return;
-  const canvas=$('game-canvas');
-  const ctx=canvas.getContext('2d');
+function gameLoop(){
+  if(!gameRunning)return;
+  const ctx=$('game-canvas').getContext('2d');
   ctx.imageSmoothingEnabled=false;
-  updateMovement(); updateCamera(); render(ctx);
-  gState.frame++;
-  gameAnimId=requestAnimationFrame(gameLoop);
+  updateMovement();updateCamera();render(ctx);
+  gState.frame++;gameAnimId=requestAnimationFrame(gameLoop);
 }
 
 // ══════════════════════════════════════════════
 //  CELEBRATION SCREEN
 // ══════════════════════════════════════════════
-let celebState = {
-  candlesLit:0, totalCandles:20,
-  balloons:[], particles:[],
-  musicPlaying:false,
-  stars:[], frame:0,
-  confetti:[], running:false,
+let celebState={
+  candlesLit:0,totalCandles:20,balloons:[],particles:[],
+  stars:[],frame:0,confetti:[],running:false
 };
 
-function startCelebration() {
-  // Stop game loop
-  gameRunning = false;
-  cancelAnimationFrame(gameAnimId);
-
-  // Hide game UI
-  $('game-canvas').style.display = 'none';
-  $('textbox').style.display    = 'none';
-  $('ui-bar').style.display     = 'none';
-
-  // Show celebration
-  $('celebration').style.display = 'flex';
-
-  // Init state fresh
-  celebState.stars = Array.from({length:60}, () => ({
-    x:rand(0,480), y:rand(0,360),
-    s:rand(0.5,2), t:rand(0,Math.PI*2), sp:rand(0.02,0.08)
-  }));
-  celebState.confetti = Array.from({length:80}, () => ({
-    x:rand(0,480), y:rand(-50,360),
-    vx:rand(-1,1), vy:rand(0.5,2.5),
+function startCelebration(){
+  gameRunning=false;cancelAnimationFrame(gameAnimId);
+  $('game-canvas').style.display='none';
+  $('textbox').style.display='none';
+  $('ui-bar').style.display='none';
+  showTouchControls(false);
+  $('celebration').style.display='flex';
+  celebState.stars=Array.from({length:60},()=>({x:rand(0,480),y:rand(0,360),s:rand(.5,2),t:rand(0,Math.PI*2),sp:rand(.02,.08)}));
+  celebState.confetti=Array.from({length:80},()=>({
+    x:rand(0,480),y:rand(-50,360),vx:rand(-1,1),vy:rand(.5,2.5),
     color:['#ff6b8a','#ffd700','#7ecfff','#ff9f43','#c3a0f7'][randi(0,4)],
-    size:randi(4,10), rot:rand(0,360)
+    size:randi(4,10),rot:rand(0,360)
   }));
-  celebState.candlesLit  = 0;
-  celebState.balloons    = [];
-  celebState.particles   = [];
-  celebState.frame       = 0;
-
-  if(!celebState.running) {
-    celebState.running = true;
-    celebLoop();
-  }
+  celebState.candlesLit=0;celebState.balloons=[];celebState.particles=[];celebState.frame=0;
+  if(!celebState.running){celebState.running=true;celebLoop();}
 }
 
-function celebLoop() {
-  if(!celebState.running) return;
-  const canvas = $('celebration-canvas');
-  const ctx    = canvas.getContext('2d');
-  const f      = celebState.frame;
-  const W      = 480, H = 360;
+function celebLoop(){
+  if(!celebState.running)return;
+  const ctx=$('celebration-canvas').getContext('2d');
+  const f=celebState.frame,CW=480,CH=360;
+  ctx.fillStyle='#0d0010';ctx.fillRect(0,0,CW,CH);
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'rgba(26,0,64,.9)');g.addColorStop(1,'rgba(13,0,26,.95)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
 
-  // Background
-  ctx.fillStyle = '#0d0010';
-  ctx.fillRect(0,0,W,H);
-
-  // Gradient overlay
-  const grad = ctx.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,'rgba(26,0,64,0.9)');
-  grad.addColorStop(1,'rgba(13,0,26,0.95)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,0,W,H);
-
-  // Stars
-  celebState.stars.forEach(s => {
-    s.t += s.sp;
-    const alpha = (Math.sin(s.t)+1)/2*0.8+0.2;
-    ctx.fillStyle = `rgba(255,255,200,${alpha})`;
-    ctx.fillRect(s.x|0, s.y|0, Math.max(1,s.s|0), Math.max(1,s.s|0));
+  celebState.stars.forEach(s=>{
+    s.t+=s.sp;
+    ctx.fillStyle=`rgba(255,255,200,${(Math.sin(s.t)+1)/2*.8+.2})`;
+    ctx.fillRect(s.x|0,s.y|0,Math.max(1,s.s|0),Math.max(1,s.s|0));
+  });
+  celebState.confetti.forEach(c=>{
+    c.y+=c.vy;c.x+=c.vx;c.rot+=3;if(c.y>CH){c.y=-10;c.x=rand(0,CW);}
+    ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rot*Math.PI/180);
+    ctx.fillStyle=c.color;ctx.fillRect(-c.size/2,-c.size/2,c.size,c.size/2);ctx.restore();
+  });
+  celebState.balloons.forEach((b,i)=>{
+    const wo=Math.sin(f*.04+i)*6;
+    ctx.strokeStyle='#ffffff55';ctx.lineWidth=1;ctx.beginPath();
+    ctx.moveTo(b.x+wo,b.y+40);ctx.bezierCurveTo(b.x+wo,b.y+60,b.x,b.y+70,b.x,b.y+80);ctx.stroke();
+    ctx.fillStyle=b.color;ctx.beginPath();ctx.ellipse(b.x+wo,b.y,18,22,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=b.color+'99';ctx.beginPath();ctx.ellipse(b.x+wo-5,b.y-7,6,8,-.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(b.x+wo,b.y+22,3,0,Math.PI*2);ctx.fill();
+    b.y-=.3;if(b.y<-60)b.y=CH+20;
   });
 
-  // Confetti
-  celebState.confetti.forEach(c => {
-    c.y += c.vy; c.x += c.vx; c.rot += 3;
-    if(c.y > H){ c.y=-10; c.x=rand(0,W); }
-    ctx.save();
-    ctx.translate(c.x, c.y);
-    ctx.rotate(c.rot*Math.PI/180);
-    ctx.fillStyle = c.color;
-    ctx.fillRect(-c.size/2, -c.size/2, c.size, c.size/2);
-    ctx.restore();
+  const pulse=Math.sin(f*.05)*1.5;
+  ctx.fillStyle='#2a004099';ctx.fillRect(20,14+pulse,440,56);
+  ctx.strokeStyle='#f7c948';ctx.lineWidth=3;ctx.strokeRect(20,14+pulse,440,56);
+  ctx.strokeStyle='#c8922a';ctx.lineWidth=1;ctx.strokeRect(26,20+pulse,428,44);
+  ctx.fillStyle='#f7c948';ctx.font='12px "Press Start 2P"';ctx.textAlign='center';
+  ctx.fillText('HAPPY 20TH BIRTHDAY',240,36+pulse);
+  ctx.fillStyle='#ff9f43';ctx.font='14px "Press Start 2P"';ctx.fillText('ANUSHKA! ✨',240,58+pulse);
+  ctx.fillStyle='#c3a0f7';ctx.font='7px "Press Start 2P"';ctx.fillText('17 · 05 · 2006  →  17 · 05 · 2026',240,84);
+
+  drawCake(ctx,240,270,celebState.candlesLit,celebState.totalCandles,f);
+
+  ctx.fillStyle='#f0e8c8';ctx.font='7px "Press Start 2P"';ctx.textAlign='center';
+  ctx.fillText(celebState.candlesLit+'/'+celebState.totalCandles+' CANDLES LIT',240,340);
+
+  celebState.particles=celebState.particles.filter(p=>p.life>0);
+  celebState.particles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.life--;
+    ctx.fillStyle=`rgba(${p.r},${p.g},${p.b},${p.life/p.maxLife})`;ctx.fillRect(p.x|0,p.y|0,p.size,p.size);
   });
-
-  // Balloons
-  celebState.balloons.forEach((b, i) => {
-    const wobble = Math.sin(f*0.04+i)*6;
-    ctx.strokeStyle = '#ffffff55'; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(b.x+wobble, b.y+40);
-    ctx.bezierCurveTo(b.x+wobble, b.y+60, b.x, b.y+70, b.x, b.y+80);
-    ctx.stroke();
-    ctx.fillStyle = b.color;
-    ctx.beginPath(); ctx.ellipse(b.x+wobble, b.y, 18, 22, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = b.color+'99';
-    ctx.beginPath(); ctx.ellipse(b.x+wobble-5, b.y-7, 6, 8, -0.5, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = b.color;
-    ctx.beginPath(); ctx.arc(b.x+wobble, b.y+22, 3, 0, Math.PI*2); ctx.fill();
-    b.y -= 0.3;
-    if(b.y < -60) b.y = H + 20;
-  });
-
-  // Title banner
-  const pulse = Math.sin(f*0.05)*1.5;
-  ctx.fillStyle = '#2a004099';
-  ctx.fillRect(20, 14+pulse, 440, 56);
-  ctx.strokeStyle = '#f7c948'; ctx.lineWidth = 3;
-  ctx.strokeRect(20, 14+pulse, 440, 56);
-  ctx.strokeStyle = '#c8922a'; ctx.lineWidth = 1;
-  ctx.strokeRect(26, 20+pulse, 428, 44);
-
-  ctx.fillStyle = '#f7c948';
-  ctx.font = '12px "Press Start 2P"';
-  ctx.textAlign = 'center';
-  ctx.fillText('HAPPY 20TH BIRTHDAY', 240, 36+pulse);
-  ctx.fillStyle = '#ff9f43';
-  ctx.font = '14px "Press Start 2P"';
-  ctx.fillText('ANUSHKA! ✨', 240, 58+pulse);
-
-  ctx.fillStyle = '#c3a0f7';
-  ctx.font = '7px "Press Start 2P"';
-  ctx.fillText('17 · 05 · 2006  →  17 · 05 · 2026', 240, 84);
-
-  // Cake — drawn in lower portion
-  drawCake(ctx, 240, 270, celebState.candlesLit, celebState.totalCandles, f);
-
-  // Candle count label
-  ctx.fillStyle = '#f0e8c8';
-  ctx.font = '7px "Press Start 2P"';
-  ctx.textAlign = 'center';
-  ctx.fillText(celebState.candlesLit+'/'+celebState.totalCandles+' CANDLES LIT', 240, 340);
-
-  // Flame particles
-  celebState.particles = celebState.particles.filter(p=>p.life>0);
-  celebState.particles.forEach(p => {
-    p.x+=p.vx; p.y+=p.vy; p.life--;
-    ctx.fillStyle=`rgba(${p.r},${p.g},${p.b},${p.life/p.maxLife})`;
-    ctx.fillRect(p.x|0, p.y|0, p.size, p.size);
-  });
-
-  if(celebState.candlesLit>0 && f%3===0) {
-    const lit = Math.min(celebState.candlesLit, 20);
-    const spacing = Math.min(14, 96/celebState.totalCandles);
-    const startX = 240 - (celebState.totalCandles/2)*spacing + spacing/2;
-    for(let i=0; i<lit; i++) {
-      const cx = startX + i*spacing;
-      celebState.particles.push({
-        x:cx, y:200,
-        vx:rand(-0.5,0.5), vy:rand(-1.5,-0.3),
-        r:255, g:randi(100,200), b:0,
-        life:20, maxLife:20, size:2
-      });
-    }
+  if(celebState.candlesLit>0&&f%3===0){
+    const lit=Math.min(celebState.candlesLit,20),sp=Math.min(14,96/celebState.totalCandles),sx=240-(celebState.totalCandles/2)*sp+sp/2;
+    for(let i=0;i<lit;i++)celebState.particles.push({x:sx+i*sp,y:200,vx:rand(-.5,.5),vy:rand(-1.5,-.3),r:255,g:randi(100,200),b:0,life:20,maxLife:20,size:2});
   }
-
-  celebState.frame++;
-  requestAnimationFrame(celebLoop);
+  celebState.frame++;requestAnimationFrame(celebLoop);
 }
 
-function drawCake(ctx, cx, cy, lit, total, frame) {
-  const layers = [
-    { h:40, w:160, color:'#c0392b', dec:'#e74c3c', y:0 },
-    { h:34, w:128, color:'#e67e22', dec:'#f39c12', y:-40 },
-    { h:28, w:96,  color:'#8e44ad', dec:'#9b59b6', y:-74 },
-  ];
-
-  layers.forEach(l => {
-    const ly = cy + l.y;
-    // Shadow
-    ctx.fillStyle='#00000055';
-    ctx.fillRect(cx-l.w/2+4, ly+4, l.w, l.h);
-    // Main body
-    ctx.fillStyle=l.color;
-    ctx.fillRect(cx-l.w/2, ly, l.w, l.h);
-    // Top highlight / frosting band
-    ctx.fillStyle=l.dec;
-    ctx.fillRect(cx-l.w/2, ly, l.w, 8);
-    // Frosting drips
-    const drips = Math.floor(l.w/14);
-    for(let d=0; d<drips; d++) {
-      ctx.fillStyle='#ffffffcc';
-      const dx = cx - l.w/2 + d*(l.w/drips) + 3;
-      const dh = 8 + (d*7)%8;
-      ctx.fillRect(dx, ly, 6, dh);
-    }
-    // Gold dots
-    ctx.fillStyle='#ffd700';
-    const dots = Math.floor(l.w/18);
-    for(let d=0; d<dots; d++) {
-      ctx.fillRect(cx - l.w/2 + d*(l.w/dots) + 8, ly+16, 5, 5);
-    }
+function drawCake(ctx,cx,cy,lit,total,frame){
+  const layers=[{h:40,w:160,color:'#c0392b',dec:'#e74c3c',y:0},{h:34,w:128,color:'#e67e22',dec:'#f39c12',y:-40},{h:28,w:96,color:'#8e44ad',dec:'#9b59b6',y:-74}];
+  layers.forEach(l=>{
+    const ly=cy+l.y;
+    ctx.fillStyle='#00000055';ctx.fillRect(cx-l.w/2+4,ly+4,l.w,l.h);
+    ctx.fillStyle=l.color;ctx.fillRect(cx-l.w/2,ly,l.w,l.h);
+    ctx.fillStyle=l.dec;ctx.fillRect(cx-l.w/2,ly,l.w,8);
+    const dr=Math.floor(l.w/14);
+    for(let d=0;d<dr;d++){ctx.fillStyle='#ffffffcc';ctx.fillRect(cx-l.w/2+d*(l.w/dr)+3,ly,6,8+(d*7)%8);}
+    ctx.fillStyle='#ffd700';const dots=Math.floor(l.w/18);
+    for(let d=0;d<dots;d++)ctx.fillRect(cx-l.w/2+d*(l.w/dots)+8,ly+16,5,5);
   });
-
-  // Plate
-  ctx.fillStyle='#e8e0d0'; ctx.fillRect(cx-90, cy+38, 180, 8);
-  ctx.fillStyle='#d0c8b8'; ctx.fillRect(cx-90, cy+44, 180, 4);
-
-  // Candles on top layer
-  const topY = cy + layers[2].y - 4;
-  const spacing = Math.min(12, 90/total);
-  const startX = cx - (total/2)*spacing + spacing/2;
-  const candleColors = ['#ff6b8a','#ffd700','#7ecfff','#ff9f43','#c3a0f7'];
-
-  for(let i=0; i<total; i++) {
-    const candleX = startX + i*spacing;
-    const isLit = i < lit;
-    ctx.fillStyle = candleColors[i % candleColors.length];
-    ctx.fillRect(candleX-2, topY-16, 4, 14);
-    ctx.fillStyle = '#1a0a00';
-    ctx.fillRect(candleX, topY-18, 1, 3);
-
-    if(isLit) {
-      const flicker = Math.sin(frame*0.2+i*0.7)*1.5;
-      // Glow halo
-      ctx.fillStyle = 'rgba(255,180,0,0.12)';
-      ctx.beginPath(); ctx.arc(candleX, topY-22, 9, 0, Math.PI*2); ctx.fill();
-      // Outer flame
-      ctx.fillStyle = '#ff9f43';
-      ctx.beginPath(); ctx.ellipse(candleX+flicker*0.5, topY-20, 2.5, 5, 0, 0, Math.PI*2); ctx.fill();
-      // Inner flame
-      ctx.fillStyle = '#fff7b0';
-      ctx.beginPath(); ctx.ellipse(candleX+flicker*0.3, topY-21, 1.5, 3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e8e0d0';ctx.fillRect(cx-90,cy+38,180,8);
+  ctx.fillStyle='#d0c8b8';ctx.fillRect(cx-90,cy+44,180,4);
+  const topY=cy+layers[2].y-4,sp=Math.min(12,90/total),sx=cx-(total/2)*sp+sp/2;
+  const cc=['#ff6b8a','#ffd700','#7ecfff','#ff9f43','#c3a0f7'];
+  for(let i=0;i<total;i++){
+    const cx2=sx+i*sp,isLit=i<lit;
+    ctx.fillStyle=cc[i%cc.length];ctx.fillRect(cx2-2,topY-16,4,14);
+    ctx.fillStyle='#1a0a00';ctx.fillRect(cx2,topY-18,1,3);
+    if(isLit){
+      const fl=Math.sin(frame*.2+i*.7)*1.5;
+      ctx.fillStyle='rgba(255,180,0,.12)';ctx.beginPath();ctx.arc(cx2,topY-22,9,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ff9f43';ctx.beginPath();ctx.ellipse(cx2+fl*.5,topY-20,2.5,5,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff7b0';ctx.beginPath();ctx.ellipse(cx2+fl*.3,topY-21,1.5,3,0,0,Math.PI*2);ctx.fill();
     }
   }
 }
 
 // ── CELEBRATION BUTTONS ──
-let audioCtx = null;
-let musicNodes = [];
-let musicPlaying = false;
-
-function getAudioCtx() {
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-
-const HBD_MELODY = [
-  [261.6,0.3],[261.6,0.1],[293.7,0.4],[261.6,0.4],[349.2,0.4],[329.6,0.8],
-  [261.6,0.3],[261.6,0.1],[293.7,0.4],[261.6,0.4],[392.0,0.4],[349.2,0.8],
-  [261.6,0.3],[261.6,0.1],[523.2,0.4],[440.0,0.4],[349.2,0.4],[329.6,0.4],[293.7,0.8],
-  [466.2,0.3],[466.2,0.1],[440.0,0.4],[349.2,0.4],[392.0,0.4],[349.2,0.8],
-];
-
-function playHappyBirthday() {
-  const ac = getAudioCtx();
-  let t = ac.currentTime;
-  musicNodes = [];
-  HBD_MELODY.forEach(([freq, dur]) => {
-    const osc = ac.createOscillator();
-    const gain = ac.createGain();
-    osc.connect(gain); gain.connect(ac.destination);
-    osc.type = 'triangle';
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.3, t+0.02);
-    gain.gain.linearRampToValueAtTime(0.3, t+dur-0.05);
-    gain.gain.linearRampToValueAtTime(0, t+dur);
-    osc.start(t); osc.stop(t+dur+0.01);
-    musicNodes.push(osc);
-    t += dur;
+let audioCtx=null,musicNodes=[],musicPlaying=false;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+const MELODY=[[261.6,.3],[261.6,.1],[293.7,.4],[261.6,.4],[349.2,.4],[329.6,.8],[261.6,.3],[261.6,.1],[293.7,.4],[261.6,.4],[392,.4],[349.2,.8],[261.6,.3],[261.6,.1],[523.2,.4],[440,.4],[349.2,.4],[329.6,.4],[293.7,.8],[466.2,.3],[466.2,.1],[440,.4],[349.2,.4],[392,.4],[349.2,.8]];
+function playHBD(){
+  const ac=getAC();let t=ac.currentTime;musicNodes=[];
+  MELODY.forEach(([freq,dur])=>{
+    const osc=ac.createOscillator(),gain=ac.createGain();
+    osc.connect(gain);gain.connect(ac.destination);osc.type='triangle';osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(.3,t+.02);gain.gain.linearRampToValueAtTime(.3,t+dur-.05);gain.gain.linearRampToValueAtTime(0,t+dur);
+    osc.start(t);osc.stop(t+dur+.01);musicNodes.push(osc);t+=dur;
   });
-  musicPlaying = true;
-  $('music-status').textContent = '♪ playing... ♪';
-  $('btn-music').textContent = '■ STOP MUSIC';
-  const totalDur = HBD_MELODY.reduce((a,[,d])=>a+d,0)*1000+500;
-  setTimeout(()=>{
-    if(musicPlaying){ musicPlaying=false; $('music-status').textContent='make a wish... ✨'; $('btn-music').textContent='♪ PLAY MUSIC'; }
-  }, totalDur);
+  musicPlaying=true;$('music-status').textContent='♪ playing... ♪';$('btn-music').textContent='■ STOP MUSIC';
+  setTimeout(()=>{if(musicPlaying){musicPlaying=false;$('music-status').textContent='make a wish... ✨';$('btn-music').textContent='♪ PLAY MUSIC';}},MELODY.reduce((a,[,d])=>a+d,0)*1000+500);
 }
+function stopMusic(){musicNodes.forEach(n=>{try{n.stop();}catch(e){}});musicNodes=[];musicPlaying=false;$('music-status').textContent='make a wish... ✨';$('btn-music').textContent='♪ PLAY MUSIC';}
 
-function stopMusic() {
-  musicNodes.forEach(n=>{try{n.stop();}catch(e){}});
-  musicNodes=[]; musicPlaying=false;
-  $('music-status').textContent='make a wish... ✨';
-  $('btn-music').textContent='♪ PLAY MUSIC';
-}
-
-$('btn-music').addEventListener('click', ()=>{ if(musicPlaying) stopMusic(); else playHappyBirthday(); });
-
-$('btn-candle').addEventListener('click', ()=>{
-  if(celebState.candlesLit < celebState.totalCandles) {
-    celebState.candlesLit = Math.min(celebState.totalCandles, celebState.candlesLit+5);
-    $('btn-candle').textContent = celebState.candlesLit>=celebState.totalCandles ? '🎂 ALL LIT!' : '🕯 MORE CANDLES';
-    for(let i=0;i<40;i++){
-      celebState.particles.push({
-        x:240+rand(-80,80), y:210,
-        vx:rand(-2,2), vy:rand(-4,-0.5),
-        r:255, g:randi(100,220), b:randi(0,100),
-        life:40, maxLife:40, size:3
-      });
-    }
+$('btn-music').addEventListener('click',()=>musicPlaying?stopMusic():playHBD());
+$('btn-candle').addEventListener('click',()=>{
+  if(celebState.candlesLit<celebState.totalCandles){
+    celebState.candlesLit=Math.min(celebState.totalCandles,celebState.candlesLit+5);
+    $('btn-candle').textContent=celebState.candlesLit>=celebState.totalCandles?'🎂 ALL LIT!':'🕯 MORE CANDLES';
+    for(let i=0;i<40;i++)celebState.particles.push({x:240+rand(-80,80),y:210,vx:rand(-2,2),vy:rand(-4,-.5),r:255,g:randi(100,220),b:randi(0,100),life:40,maxLife:40,size:3});
   }
 });
-
-$('btn-balloons').addEventListener('click', ()=>{
-  const colors=['#ff6b8a','#ffd700','#7ecfff','#ff9f43','#c3a0f7','#98fb98','#ff8c69'];
-  for(let i=0;i<5;i++){
-    celebState.balloons.push({
-      x:rand(40,440),
-      y:rand(280,360),
-      color:colors[randi(0,colors.length-1)]
-    });
-  }
+$('btn-balloons').addEventListener('click',()=>{
+  const cols=['#ff6b8a','#ffd700','#7ecfff','#ff9f43','#c3a0f7','#98fb98','#ff8c69'];
+  for(let i=0;i<5;i++)celebState.balloons.push({x:rand(40,440),y:rand(280,360),color:cols[randi(0,cols.length-1)]});
 });
 </script>
 </body>
