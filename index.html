@@ -155,7 +155,7 @@ canvas { display: block; width: 480px; }
       <div id="textbox-arrow">▼</div>
     </div>
     <div id="ui-bar" style="display:none">
-      <span id="location-label">✦ THE SUNKEN VALE</span>
+      <span id="location-label">✦ STARFALL MEADOW</span>
       <span id="step-hint">D-PAD: MOVE  |  ✦: TALK</span>
     </div>
 
@@ -340,22 +340,22 @@ const TC={
 
 const scenes=[
   {
-    name:'✦ THE SUNKEN VALE',bgTop:'#9dd8f0',bgBot:'#52c94a',
+    name:'✦ THE STARFALL MEADOW',bgTop:'#9dd8f0',bgBot:'#52c94a',
     map:buildMap1(),startX:4,startY:10,
     npcs:[
-      {x:8,y:5,sprite:'old',name:'Elder Moss',lines:['Ah, a traveller!','Today is a special day...','Someone very special was born 20 years ago!','Go find the Birthday Star!','It lies beyond the Mushroom Hills!']},
-      {x:20,y:8,sprite:'girl',name:'Lily',lines:['Happy birthday vibes!','I heard Anushka turns 20 today!','She\'s going on the adventure of a lifetime!','Go north through the cave!']},
-      {x:14,y:14,sprite:'bunny',name:'Bun-Bun',lines:['Squeak!','I hid a birthday gift','somewhere in this valley!','Maybe near the big oak...']},
+      {x:8,y:5,sprite:'old',name:'Sarthak',lines:['Ah, my sister!','Today is a special day...','Someone very special was born 20 years ago!','Go find the Birthday Star!','It lies beyond the Scranton Hills!']},
+      {x:20,y:8,sprite:'girl',name:'Gauri',lines:['Happy birthday vibes!','I heard Anushka turns 20 today!','She\'s going on the adventure of a lifetime!','Go north through the cave!']},
+      {x:14,y:14,sprite:'bunny',name:'Siddhi',lines:['Hiiii!','I hid a birthday gift','somewhere in this valley!','Maybe near the big oak...']},
     ],
     exitTile:{x:14,y:1},nextScene:1,
     collectibles:[{x:25,y:14,id:'cake_slice',label:'🍰 Cake Slice',msg:'You found a slice of cake! Someone is celebrating...'}],
   },
   {
-    name:'✦ MUSHROOM HILLS',bgTop:'#d4a0e0',bgBot:'#7a4fa0',
+    name:'✦ SCRANTON HILLS',bgTop:'#d4a0e0',bgBot:'#7a4fa0',
     map:buildMap2(),startX:14,startY:18,
     npcs:[
-      {x:7,y:6,sprite:'witch',name:'Zara',lines:['Welcome to Mushroom Hills!','The birthday castle lies ahead!','But first — can you feel it?','The magic of turning twenty!','Twenty is the start of everything real.']},
-      {x:22,y:10,sprite:'fox',name:'Fennick',lines:['I\'ve been waiting for you!','These mushrooms glow because','someone wonderful is being celebrated!','Anushka, the brave adventurer!']},
+      {x:7,y:6,sprite:'witch',name:'Pam',lines:['Anushka\'s birthday celebration, this is Pam','Michael wanted me to add more decorations, but honestly I think it already looks nice.','Anyway… twenty!','That’s a pretty big one.','It’s the age where everyone starts pretending they know what they’re doing.', 'They don’t.', 'Jim would probably make a joke right now to stop this from getting too emotional.', 'But secretly? I think turning twenty is kind of beautiful.', 'It’s the start of becoming who you actually are.']},
+      {x:22,y:10,sprite:'fox',name:'Michael',lines:['I am your regional birthday manager','Assistant TO the birthday girl.', 'Today we celebrate one thing and one thing only:',, 'Anushka turning twenty.','That\’s right. Two. Zero.', 'This is bigger than Pretzel Day.']},
     ],
     exitTile:{x:14,y:1},nextScene:2,
     collectibles:[{x:4,y:3,id:'star',label:'⭐ Wishing Star',msg:'A star fell here just for you, Anushka!'}],
@@ -364,7 +364,7 @@ const scenes=[
     name:'✦ BIRTHDAY CASTLE',bgTop:'#ffb347',bgBot:'#ff6b8a',
     map:buildMap3(),startX:14,startY:18,
     npcs:[
-      {x:14,y:8,sprite:'fairy',name:'Celeste',lines:['You made it to the Birthday Castle!','This magical place appears','only once every year...','On YOUR birthday!','Anushka — happy 20th!!','Go to the throne room!','Your party awaits! ✨']},
+      {x:14,y:8,sprite:'fairy',name:'Celeste',lines:['You made it to the Birthday Castle!','This magical place appears','only once every year...','On YOUR birthday!','Anushka, happy 20th!!','Go to the throne room!','Your party awaits! ✨']},
       {x:7,y:5,sprite:'knight',name:'Sir Puffin',lines:['The cake is ready!','Twenty candles, all lined up!','Shall we celebrate?']},
     ],
     exitTile:{x:14,y:1},nextScene:'celebration',
